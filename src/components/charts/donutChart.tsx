@@ -59,39 +59,47 @@ export function DonutChart({ trades }: DonutChartProps) {
         <CardDescription className="text-gray-400">January - June 2024</CardDescription>
       </CardHeader>
       <CardContent className="p-0 h-[250px] relative">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              paddingAngle={2}
-              dataKey="value"
-              isAnimationActive={false}
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              layout="horizontal"
-              verticalAlign="bottom"
-              align="center"
-              formatter={(value) => (
-                <span style={{ color: "white" }}>
-                  {value}: {chartData.find((item) => item.name === value)?.value || 0}
-                </span>
-              )}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-4xl font-bold">{totalTrades}</span>
-          <span className="text-sm text-gray-400">Trades</span>
-        </div>
+        {chartData.length > 0 ? (
+          <>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                  isAnimationActive={false}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  layout="horizontal"
+                  verticalAlign="bottom"
+                  align="center"
+                  formatter={(value) => (
+                    <span style={{ color: "white" }}>
+                      {value}: {chartData.find((item) => item.name === value)?.value || 0}
+                    </span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-4xl font-bold">{totalTrades}</span>
+              <span className="text-sm text-gray-400">Trades</span>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-center text-gray-400">Aun no hay trades registrados</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
