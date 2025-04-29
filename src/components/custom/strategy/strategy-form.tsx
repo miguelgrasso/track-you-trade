@@ -19,6 +19,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Strategy } from "@/app/interface/strategy.interface";
+import { useEffect } from "react";
+import { Switch } from "@/components/ui/switch";
+import { DialogClose } from "@/components/ui/dialog";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -27,36 +30,60 @@ const formSchema = z.object({
   description: z.string().min(10, {
     message: "La descripción debe tener al menos 10 caracteres.",
   }),
+  status: z.string().optional(),
 });
 
 interface StrategyFormProps {
-  strategy?: Strategy;
+  strategyId?: number; 
+  isDialog?: boolean;
   onSuccess?: () => void;
 }
 
-export function StrategyForm({ strategy, onSuccess }: StrategyFormProps) {
+export function StrategyForm({ strategyId, isDialog = false, onSuccess }: StrategyFormProps) {
   const router = useRouter();
-  const { addStrategy, updateStrategy } = useStrategiesStore();
+  const { strategies, addStrategy, updateStrategy } = useStrategiesStore();
+
+  const strategy = strategyId 
+    ? strategies.find(s => s.id === strategyId) 
+    : undefined;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: strategy?.name || "",
-      description: strategy?.description || "",
+      name: "",
+      description: "",
+      status: "inactive",
     },
   });
 
+  useEffect(() => {
+    if (strategy) {
+      form.reset({
+        name: strategy.name,
+        description: strategy.description,
+        status: strategy.status
+      });
+    }
+  }, [strategy, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      if (strategy) {
-        await updateStrategy(strategy.id, values);
+      if (strategyId) {
+        await updateStrategy(strategyId, values);
         toast.success("Estrategia actualizada correctamente");
       } else {
         await addStrategy(values);
         toast.success("Estrategia creada correctamente");
       }
-      onSuccess?.();
-      router.push("/strategies");
+      
+      if (!isDialog) {
+        router.push("/strategies");
+      } else {
+        form.reset();
+        if (onSuccess) {
+          onSuccess();
+        }
+      }
     } catch (error) {
       toast.error("Error al guardar la estrategia");
     }
@@ -64,7 +91,7 @@ export function StrategyForm({ strategy, onSuccess }: StrategyFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
@@ -101,9 +128,48 @@ export function StrategyForm({ strategy, onSuccess }: StrategyFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit">
-          {strategy ? "Actualizar Estrategia" : "Crear Estrategia"}
-        </Button>
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">
+                  Activar Estrategia
+                </FormLabel>
+                <FormDescription>
+                  Activa o desactiva esta estrategia en tu sistema.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value === "active"}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked ? "active" : "inactive");
+                  }}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-end">
+          {isDialog ? (
+            <>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" className="mr-2">
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button type="submit">
+                {strategyId ? "Actualizar" : "Crear"}
+              </Button>
+            </>
+          ) : (
+            <Button type="submit">
+              {strategyId ? "Actualizar Estrategia" : "Crear Estrategia"}
+            </Button>
+          )}
+        </div>
       </form>
     </Form>
   );

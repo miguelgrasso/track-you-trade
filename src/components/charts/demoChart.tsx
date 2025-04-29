@@ -45,35 +45,41 @@ export function DemoChart({ trades }: DemoChartProps) {
         <CardTitle className="text-xl">Consolidación de Pares Tradeados</CardTitle>
       </CardHeader>
       <CardContent className="p-0 h-[250px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }} barSize={40}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              /*dataKey="symbol"
-              angle={0}
-              tick={{ fill: "white", fontSize: 12 }}
-              tickLine={false}
-              axisLine={{ stroke: "rgba(255, 255, 255, 0.2)" }}*/
-              dataKey="symbol"
-              tick={{ fill: "white", fontSize: 12 }}
-              angle={-45} // Rotar etiquetas
-              textAnchor="end" // Alinear etiquetas al final
-              interval={0} // Mostrar todas las etiquetas
-            />
-            <YAxis
-              tick={{ fill: "white", fontSize: 12 }}
-              tickLine={false}
-              axisLine={{ stroke: "rgba(255, 255, 255, 0.2)" }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar
-              dataKey="count"
-              fill="#22c55e"
-              radius={[4, 4, 0, 0]}
-              isAnimationActive={false} // Desactivar animación para mejorar la interactividad
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        {chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }} barSize={40}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                /*dataKey="symbol"
+                angle={0}
+                tick={{ fill: "white", fontSize: 12 }}
+                tickLine={false}
+                axisLine={{ stroke: "rgba(255, 255, 255, 0.2)" }}*/
+                dataKey="symbol"
+                tick={{ fill: "white", fontSize: 12 }}
+                angle={-45} // Rotar etiquetas
+                textAnchor="end" // Alinear etiquetas al final
+                interval={0} // Mostrar todas las etiquetas
+              />
+              <YAxis
+                tick={{ fill: "white", fontSize: 12 }}
+                tickLine={false}
+                axisLine={{ stroke: "rgba(255, 255, 255, 0.2)" }}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar
+                dataKey="count"
+                fill="#22c55e"
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={false} // Desactivar animación para mejorar la interactividad
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-center text-gray-400">Aun no hay trades registrados</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

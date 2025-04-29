@@ -13,6 +13,7 @@ import { getSymbols } from "@/app/api/symbol.api";
 import { getResults } from "@/app/api/result.api";
 import { getOperationTypes } from "@/app/api/operationtype.api";
 import { getStatusOperations } from "@/app/api/statusoperation.api";
+import { getStrategies } from "@/app/api/strategy.api";
 import { useTradeStore } from "@/app/stores/trades-store";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -32,6 +33,7 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
             spread: trade?.spread || 0,
             resultId: trade?.resultId || 0,
             statusOperationId: trade?.statusOperationId || 0,
+            strategyId: trade?.strategyId || 0,
         },
     });
 
@@ -40,6 +42,7 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
     const [selectedOperationType, setSelectedOperationType] = useState<number>(trade?.operationTypeId || 0)
     const [selectedResult, setSelectedResult] = useState<number>(trade?.resultId || 0)
     const [selectedStatusOperation, setSelectedStatusOperation] = useState<number>(trade?.statusOperationId || 0)
+    const [selectedStrategy, setSelectedStrategy] = useState<number>(trade?.strategyId || 0)
     const [selectedDateEntry, setSelectedDateEntry] = useState<Date | undefined>(
         trade?.dateEntry ? new Date(trade.dateEntry) : new Date(),
     );
@@ -49,6 +52,7 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
     const [operationTypeOptions, setOperationTypeOptions] = useState<Array<{ value: string; label: string }>>([])
     const [resultOptions, setResultOptions] = useState<Array<{ value: string; label: string }>>([])
     const [statusOperationOptions, setStatusOperationOptions] = useState<Array<{ value: string; label: string }>>([])
+    const [strategyOptions, setStrategyOptions] = useState<Array<{ value: string; label: string }>>([])
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -88,6 +92,16 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
             )
             setStatusOperationOptions(formattedStatusOperations)
 
+            // Cargar estrategias
+            const strategies = await getStrategies()
+            const formattedStrategies = strategies
+              .filter((strategy: { status: string }) => strategy.status === "active")
+              .map((strategy: { id: number; name: string }) => ({
+                value: strategy.id.toString(),
+                label: strategy.name,
+              }))
+            setStrategyOptions(formattedStrategies)
+
             console.log("Datos iniciales cargados correctamente")
         } catch (error) {
             console.error("Error al cargar datos iniciales:", error)
@@ -104,6 +118,7 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
         setSelectedOperationType(trade.operationTypeId || 0)
         setSelectedResult(trade.resultId || 0)
         setSelectedStatusOperation(trade.statusOperationId || 0)
+        setSelectedStrategy(trade.strategyId || 0)
         setSelectedDateEntry(trade.dateEntry ? new Date(trade.dateEntry) : new Date())
         }
     }, [trade])
@@ -120,6 +135,7 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
               operationTypeId: selectedOperationType,
               resultId: selectedResult,
               statusOperationId: selectedStatusOperation,
+              strategyId: selectedStrategy || undefined,
               dateEntry: selectedDateEntry?.toISOString() || "",
               quantity: data.quantity ?? 0,
               priceEntry: data.priceEntry ?? 0,
@@ -136,6 +152,7 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
           setSelectedOperationType(0)
           setSelectedResult(0)
           setSelectedStatusOperation(0)
+          setSelectedStrategy(0)
           setSelectedDateEntry(new Date())
 
         } catch (error) {
@@ -193,6 +210,14 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
               value={selectedStatusOperation.toString()}
               onChange={(val) => setSelectedStatusOperation(Number(val))}
               placeholder="Seleccione el estado"
+            />
+            
+            <Label>Estrategia</Label>
+            <ComboboxForm
+              options={strategyOptions}
+              value={selectedStrategy.toString()}
+              onChange={(val) => setSelectedStrategy(Number(val))}
+              placeholder="Seleccione la estrategia"
             />
     
             <Button type="submit" disabled={!formState.isValid}>

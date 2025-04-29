@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { StrategyClient } from "@/components/custom/strategy/strategy-client";
 
 export const metadata: Metadata = {
-  title: "Estrategias | My Journal Trading",
+  title: "Estrategies | Track your Trade",
   description: "Gestiona y visualiza tus estrategias de trading",
 };
 

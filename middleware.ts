@@ -6,5 +6,6 @@ export const config = {
     "/journal/:path*",
     "/listTrades/:path*",
     "/strategies/:path*",
+    "/confirmations/:path*",
   ]
 } 

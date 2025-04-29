@@ -1,8 +1,8 @@
-import { NewTrade, Trade } from "../interface/trade.interface";
+import { NewTrade } from "../interface/newtrade.interface";
 import { BACKEND_URL } from "../util/constantes";
 
 
-export async function getTrades(){
+export async function getTrades() {
     const res = await fetch(`${BACKEND_URL}/trades`, { cache: "no-store" });
     if (!res.ok) {
         console.log("hola: "+res.statusText)
