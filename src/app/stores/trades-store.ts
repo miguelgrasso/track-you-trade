@@ -12,7 +12,7 @@ interface TradeStore {
   refreshTrades: () => Promise<void>;
   updateLocalTrades: (trades: Trade[]) => void;
   syncWithServer: () => Promise<void>;
-  addTrade: (trade: Trade) => void;
+  addTrade: (trade: NewTrade) => Promise<void>;
   updateTrade: (trade: Trade) => void;
   deleteTrade: (tradeId: number) => void;
 };
@@ -47,21 +47,34 @@ export const useTradeStore = create<TradeStore>((set, get) => ({
     try {
       // Aquí iría la lógica para sincronizar con el servidor
       // Por ejemplo, hacer un bulk update o comparar cambios
-      set({ trades: localTrades, isDirty: false, isLoading: false });
+      const updatedTrades = localTrades.map(trade => ({
+        ...trade,
+        id: trade.id 
+      }));
+
+      set({ trades: updatedTrades, isDirty: false, isLoading: false });
     } catch (error) {
       set({ error: 'Error al sincronizar con el servidor', isLoading: false });
     }
   },
 
   // Función para añadir un nuevo trade
-  addTrade: (trade) => {
-    set((state) => {
-      const newLocalTrades = [...state.localTrades, trade];
-      return {
-        localTrades: newLocalTrades,
-        isDirty: true
-      };
-    });
+  addTrade: async (trade: NewTrade) => {
+    set({ isLoading: true, error: null });
+    try {
+      const savedTrade = await createTrade(trade);
+      set((state) => ({
+        localTrades: [...state.localTrades, savedTrade],
+        trades: [...state.trades, savedTrade],
+        isLoading: false,
+        isDirty: false
+      }));
+    } catch (error) {
+      set({ 
+        error: 'Error al guardar el trade', 
+        isLoading: false 
+      });
+    }
   },
 
   updateTrade: (updatedTrade) => {

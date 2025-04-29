@@ -9,8 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { PlusIcon } from "lucide-react";
-import { StrategyForm } from "@/components/custom/strategy/strategy-form";
+import { PlusCircle } from "lucide-react";
+import { StrategyForm } from "./strategy-form";
 import { useState } from "react";
 
 export function AddStrategyDialog() {
@@ -19,20 +19,19 @@ export function AddStrategyDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-green-700 hover:bg-green-800 text-white">
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Añadir Estrategia
+        <Button size="icon" className="h-12 w-12 rounded-full">
+          <PlusCircle className="h-6 w-6" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[900px] bg-black border-gray-800 text-white">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Registrar nueva estrategia</DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Completa el formulario para registrar una nueva estrategia en el sistema.
+          <DialogTitle>Agregar Estrategia</DialogTitle>
+          <DialogDescription>
+            Crea una nueva estrategia para tu trading
           </DialogDescription>
         </DialogHeader>
-        <div>
-          <StrategyForm onSuccess={() => setOpen(false)} />
+        <div className="py-4">
+          <StrategyForm isDialog={true} onSuccess={() => setOpen(false)} />
         </div>
       </DialogContent>
     </Dialog>

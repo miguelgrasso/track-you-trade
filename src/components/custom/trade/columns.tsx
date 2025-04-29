@@ -17,6 +17,10 @@ import {
 import { Badge } from "../../ui/badge"
 import { Trade } from "@/app/interface/trade.interface";
 
+// Función para prevenir la propagación del clic en el menú de acciones
+const stopPropagation = (e: React.MouseEvent) => {
+  e.stopPropagation();
+};
 
 export const columnsTrade: ColumnDef<Trade>[] = [
   {
@@ -26,13 +30,13 @@ export const columnsTrade: ColumnDef<Trade>[] = [
 
       return (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild onClick={stopPropagation}>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" onClick={stopPropagation}>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(String(trade.id))}

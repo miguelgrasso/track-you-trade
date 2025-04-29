@@ -55,6 +55,9 @@ export function RadarDemoChart({ trades }: RadarDemoChartProps) {
     return null;
   };
 
+  // Verificar si hay datos para mostrar
+  const hasData = Object.values(results).some(value => value > 0);
+
   return (
     <Card className="bg-black text-white w-full h-full">
       <CardHeader className="pb-2">
@@ -62,32 +65,40 @@ export function RadarDemoChart({ trades }: RadarDemoChartProps) {
         <CardDescription className="text-gray-400">Mostrando los resultados de trades</CardDescription>
       </CardHeader>
       <CardContent className="p-0 h-[250px] relative">
-        <ResponsiveContainer width="100%" height="100%">
-          <RadarChart cx="50%" cy="50%" outerRadius="65%" data={chartData}>
-            <PolarGrid stroke="rgba(255, 255, 255, 0.1)" />
-            <PolarAngleAxis
-              dataKey="subject"
-              tick={{ fill: "rgba(255, 255, 255, 0.7)" }}
-              tickFormatter={(value) => nameMap[value] || value}
-            />
-            <Radar
-              name="Resultados"
-              dataKey="value"
-              stroke="#22c55e"
-              fill="#22c55e"
-              fillOpacity={0.6}
-              isAnimationActive={false} // Desactivar animación para mejorar la interactividad
-            />
-            <Tooltip content={<CustomTooltip />} />
-          </RadarChart>
-        </ResponsiveContainer>
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <div className="flex items-center">
-            <span className="text-sm">Trending up by 5.2% this month</span>
-            <ArrowUpRight className="h-4 w-4 ml-1 text-green-500" />
+        {hasData ? (
+          <>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={chartData}>
+                <PolarGrid stroke="rgba(255, 255, 255, 0.1)" />
+                <PolarAngleAxis
+                  dataKey="subject"
+                  tick={{ fill: "rgba(255, 255, 255, 0.7)" }}
+                  tickFormatter={(value) => nameMap[value] || value}
+                />
+                <Radar
+                  name="Resultados"
+                  dataKey="value"
+                  stroke="#22c55e"
+                  fill="#22c55e"
+                  fillOpacity={0.6}
+                  isAnimationActive={false} // Desactivar animación para mejorar la interactividad
+                />
+                <Tooltip content={<CustomTooltip />} />
+              </RadarChart>
+            </ResponsiveContainer>
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <div className="flex items-center">
+                <span className="text-sm">Trending up by 5.2% this month</span>
+                <ArrowUpRight className="h-4 w-4 ml-1 text-green-500" />
+              </div>
+              <p className="text-xs text-gray-400">Resultados totales</p>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-center text-gray-400">Aun no hay trades registrados</p>
           </div>
-          <p className="text-xs text-gray-400">Resultados totales</p>
-        </div>
+        )}
       </CardContent>
     </Card>
   )

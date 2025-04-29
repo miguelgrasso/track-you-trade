@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, memo, useCallback } from "react";
+import { useEffect, useMemo, memo, useCallback, useState } from "react";
 import { useTradeStore } from "@/app/stores/trades-store";
 import { DataTable } from "@/components/custom/table/data-table";
 import { DemoChart } from "@/components/charts/demoChart";
@@ -9,6 +9,7 @@ import { RadarDemoChart } from "@/components/charts/radarChart";
 import { AddTradeDialog } from "@/components/custom/trade/add-trade-dialog";
 import { columnsTrade } from "./columns";
 import { Trade } from "@/app/interface/trade.interface";
+import { TradeDetailDrawer } from "./trade-detail-drawer";
 
 const MemoizedDemoChart = memo(DemoChart);
 const MemoizedDonutChart = memo(DonutChart);
@@ -17,6 +18,8 @@ const MemoizedDataTable = memo(DataTable) as typeof DataTable;
 
 export function TradeClient() {
   const { localTrades, trades, isLoading, error, refreshTrades, syncWithServer, isDirty } = useTradeStore();
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Cargar los trades al montar el componente
   useEffect(() => {
@@ -38,6 +41,15 @@ export function TradeClient() {
     useTradeStore.getState().updateLocalTrades(newData);
   }, []);
 
+  const handleTradeClick = useCallback((trade: Trade) => {
+    setSelectedTrade(trade);
+    setIsDrawerOpen(true);
+  }, []);
+
+  const handleCloseDrawer = useCallback(() => {
+    setIsDrawerOpen(false);
+  }, []);
+
   const memoizedCharts = useMemo(() => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <MemoizedDemoChart trades={localTrades} />
@@ -51,8 +63,9 @@ export function TradeClient() {
       columns={columnsTrade} 
       data={localTrades}
       onDataChange={handleDataChange}
+      onRowClick={handleTradeClick}
     />
-  ), [localTrades, handleDataChange]);
+  ), [localTrades, handleDataChange, handleTradeClick]);
 
   if (isLoading && trades.length === 0) return <p>Cargando datos...</p>;
   if (error) return <p>Error al cargar los datos: {error}</p>;
@@ -74,10 +87,19 @@ export function TradeClient() {
         <div className="px-4 lg:px-6">
           <h2 className="text-xl font-semibold">Historial de Trades</h2>
         </div>
-        <div className="rounded-lg bg-muted/50 p-6">
+        <div className="rounded-lg bg-muted/50">
           {memoizedTable}
         </div>
       </section>
+
+      {/* Panel de detalles del trade */}
+      {selectedTrade && (
+        <TradeDetailDrawer 
+          trade={selectedTrade} 
+          isOpen={isDrawerOpen} 
+          onClose={handleCloseDrawer} 
+        />
+      )}
 
       {/* Botón flotante de Añadir Trade */}
       <div className="fixed bottom-8 right-8">
