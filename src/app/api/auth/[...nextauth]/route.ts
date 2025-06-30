@@ -1,13 +1,16 @@
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { signInWithCognito, createGoogleUserInCognito } from "@/lib/auth"
+import { signInWithCognito, createGoogleUserInCognito } from "@/lib/auth-client"
+import { getServerConfigSafe } from "@/lib/config"
+
+const serverConfig = getServerConfigSafe();
 
 const handler = NextAuth({
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+      clientSecret: serverConfig.googleClientSecret!,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -74,16 +77,44 @@ const handler = NextAuth({
       return session
     },
     async redirect({ url, baseUrl }) {
-      // Asegurarse de que las redirecciones sean seguras
+      // Lista blanca de URLs permitidas para redirección segura
+      const allowedPaths = [
+        '/listTrades',
+        '/strategies',
+        '/confirmations',
+        '/auth/signin',
+        '/auth/signup'
+      ];
+      
+      // Si la URL empieza con baseUrl, validar que sea una ruta permitida
       if (url.startsWith(baseUrl)) {
-        if (url.includes("/listTrades")) {
-          return url
+        const path = url.replace(baseUrl, '');
+        const isAllowedPath = allowedPaths.some(allowedPath => 
+          path.startsWith(allowedPath)
+        );
+        
+        if (isAllowedPath) {
+          return url;
         }
-        return `${baseUrl}/listTrades`
-      } else if (url.startsWith("http://localhost:3000")) {
-        return url
+        return `${baseUrl}/listTrades`;
       }
-      return baseUrl
+      
+      // En desarrollo, permitir localhost
+      if (process.env.NODE_ENV === 'development' && 
+          url.startsWith("http://localhost:3000")) {
+        const urlObj = new URL(url);
+        const path = urlObj.pathname;
+        const isAllowedPath = allowedPaths.some(allowedPath => 
+          path.startsWith(allowedPath)
+        );
+        
+        if (isAllowedPath) {
+          return url;
+        }
+      }
+      
+      // Por defecto, redirigir a la página principal segura
+      return `${baseUrl}/listTrades`;
     },
   },
 })

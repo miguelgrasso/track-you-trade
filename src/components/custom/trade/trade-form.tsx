@@ -17,6 +17,7 @@ import { getStrategies } from "@/app/api/strategy.api";
 import { useTradeStore } from "@/app/stores/trades-store";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { log } from "@/lib/logger";
 
 
 export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () => void }) {
@@ -54,61 +55,82 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
     const [statusOperationOptions, setStatusOperationOptions] = useState<Array<{ value: string; label: string }>>([])
     const [strategyOptions, setStrategyOptions] = useState<Array<{ value: string; label: string }>>([])
 
-    // Cargar datos iniciales
+    // Cargar datos iniciales con cleanup y abort controller
     useEffect(() => {
+        const abortController = new AbortController();
+        let isMounted = true;
+
         const loadInitialData = async () => {
-        try {
-            // Cargar símbolos
-            const symbols = await getSymbols()
-            const formattedSymbols = symbols.map((symbol: { id: number; label: string }) => ({
-            value: symbol.id.toString(),
-            label: symbol.label,
-            }))
-            setSymbolOptions(formattedSymbols)
+            try {
+                // Crear promesas con abort signal
+                const [symbols, operationTypes, results, statusOperations, strategies] = await Promise.all([
+                    getSymbols(),
+                    getOperationTypes(),
+                    getResults(),
+                    getStatusOperations(),
+                    getStrategies()
+                ]);
 
-            // Cargar tipos de operación
-            const operationTypes = await getOperationTypes()
-            const formattedOperationTypes = operationTypes.map((operationType: { id: number; label: string }) => ({
-            value: operationType.id.toString(),
-            label: operationType.label,
-            }))
-            setOperationTypeOptions(formattedOperationTypes)
+                // Verificar si el componente sigue montado antes de actualizar el estado
+                if (!isMounted || abortController.signal.aborted) {
+                    return;
+                }
 
-            // Cargar resultados
-            const results = await getResults()
-            const formattedResults = results.map((result: { id: number; label: string }) => ({
-            value: result.id.toString(),
-            label: result.label,
-            }))
-            setResultOptions(formattedResults)
+                // Formatear símbolos
+                const formattedSymbols = symbols.map((symbol: { id: number; label: string }) => ({
+                    value: symbol.id.toString(),
+                    label: symbol.label,
+                }));
+                setSymbolOptions(formattedSymbols);
 
-            // Cargar estados de operación
-            const statusOperations = await getStatusOperations()
-            const formattedStatusOperations = statusOperations.map(
-            (statusOperation: { id: number; label: string }) => ({
-                value: statusOperation.id.toString(),
-                label: statusOperation.label,
-            }),
-            )
-            setStatusOperationOptions(formattedStatusOperations)
+                // Formatear tipos de operación
+                const formattedOperationTypes = operationTypes.map((operationType: { id: number; label: string }) => ({
+                    value: operationType.id.toString(),
+                    label: operationType.label,
+                }));
+                setOperationTypeOptions(formattedOperationTypes);
 
-            // Cargar estrategias
-            const strategies = await getStrategies()
-            const formattedStrategies = strategies
-              .filter((strategy: { status: string }) => strategy.status === "active")
-              .map((strategy: { id: number; name: string }) => ({
-                value: strategy.id.toString(),
-                label: strategy.name,
-              }))
-            setStrategyOptions(formattedStrategies)
+                // Formatear resultados
+                const formattedResults = results.map((result: { id: number; label: string }) => ({
+                    value: result.id.toString(),
+                    label: result.label,
+                }));
+                setResultOptions(formattedResults);
 
-            console.log("Datos iniciales cargados correctamente")
-        } catch (error) {
-            console.error("Error al cargar datos iniciales:", error)
-        }
-        }
+                // Formatear estados de operación
+                const formattedStatusOperations = statusOperations.map(
+                    (statusOperation: { id: number; label: string }) => ({
+                        value: statusOperation.id.toString(),
+                        label: statusOperation.label,
+                    })
+                );
+                setStatusOperationOptions(formattedStatusOperations);
 
-        loadInitialData()
+                // Formatear estrategias (solo activas)
+                const formattedStrategies = strategies
+                    .filter((strategy: { status: string }) => strategy.status === "active")
+                    .map((strategy: { id: number; name: string }) => ({
+                        value: strategy.id.toString(),
+                        label: strategy.name,
+                    }));
+                setStrategyOptions(formattedStrategies);
+
+            } catch (error) {
+                // Solo mostrar error si el componente sigue montado y no fue cancelado
+                if (isMounted && !abortController.signal.aborted) {
+                    log.error("Error al cargar datos iniciales", "TradeForm", error);
+                    toast.error("Error al cargar los datos del formulario");
+                }
+            }
+        };
+
+        loadInitialData();
+
+        // Cleanup function
+        return () => {
+            isMounted = false;
+            abortController.abort();
+        };
     }, [])
 
     // Actualizar estados cuando se proporciona un trade para editar
@@ -125,11 +147,11 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
 
     const onSubmit = handleSubmit(async (data) => {
         try {
-
-            console.log("Datos del formulario:", data)
-            console.log("Fecha seleccionada:", selectedDateEntry);
-            console.log("fecha:", data.dateEntry)
-            console.log("fecha state:", selectedDateEntry?.toISOString())    
+            log.debug("Enviando formulario de trade", "TradeForm", {
+                formData: data,
+                selectedDate: selectedDateEntry?.toISOString(),
+            });
+            
           await addTrade({
               symbolId: selectedSymbol,
               operationTypeId: selectedOperationType,
@@ -143,7 +165,7 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
               spread: data.spread ?? 0,
           })
     
-          console.log("Trade creado exitosamente")
+          log.info("Trade creado exitosamente", "TradeForm");
           await refreshTrades();
           toast.success("Trade creado exitosamente");
           onClose();
@@ -156,7 +178,7 @@ export function TradeForm({ trade, onClose }: { trade?: NewTrade; onClose: () =>
           setSelectedDateEntry(new Date())
 
         } catch (error) {
-          console.error("Error al crear el trade:", error)
+          log.error("Error al crear el trade", "TradeForm", error);
           toast.error("Error al crear el trade. Por favor, inténtalo de nuevo.");
         }
       })

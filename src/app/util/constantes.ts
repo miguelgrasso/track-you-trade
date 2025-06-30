@@ -1,1 +1,3 @@
-export const BACKEND_URL = "http://localhost:4000/api";
+import { clientConfig } from '@/lib/config';
+
+export const BACKEND_URL = clientConfig.backendUrl;
